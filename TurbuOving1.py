@@ -25,14 +25,14 @@ print(f"This is for 15, 20 ,25 seconds {U1_15} {U1_20} {U1_25} This is all the d
 
 #b)
 
-fluc_u = u - np.mean(u)
-fluc_v = v - np.mean(v)
+u_prime = u - np.mean(u)
+v_prime = v - np.mean(v)
 
-mean_fluc_u = np.mean(fluc_u)
-mean_fluc_v = np.mean(fluc_v)
+mean_u_prime = np.mean(u_prime)
+mean_v_prime = np.mean(v_prime)
 
 print()
-print(f"This is the mean fluctuation of u and v: {mean_fluc_u} and {mean_fluc_v}")
+print(f"This is the mean fluctuation of u and v: {mean_u_prime} and {mean_v_prime}")
 
 
 #c)
@@ -45,7 +45,7 @@ print(f"This is the variance of u and v: {var_u} and {var_v}")
 
 #d)
 
-turb_int = fluc_v/U1
+turb_int = v_prime/U1
 
 #e)
 
@@ -54,12 +54,12 @@ t_stop = 4 * sampling_frequency
 
 t = np.linspace(3, 4, t_stop - t_start)
 t_u = u[t_start:t_stop] 
-t_fluc_u = fluc_u[t_start:t_stop]
+t_u_prime = u_prime[t_start:t_stop]
 
 
 plt.figure(figsize=(10, 5))
 plt.plot(t, t_u, label="Velocity (u)")
-plt.plot(t,t_fluc_u, label='Fluctuating component (u`)', color="g")
+plt.plot(t,t_u_prime, label='Fluctuating component (u`)', color="g")
 plt.axhline(U1, color='r', linestyle='--', label="Mean Velocity U1")
 plt.xlabel("Time (s)")
 plt.ylabel("Velocity (m/s)")
