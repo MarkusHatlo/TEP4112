@@ -1,6 +1,5 @@
 import scipy.io
 import numpy as np
-import sympy as sp
 import scipy.signal as sg
 import matplotlib.pyplot as plt
 import statsmodels.api as sm
@@ -19,7 +18,7 @@ fs = (dataValues['fs']).item()
 fc = fs/2.5
 fc_new = 0
 LPF_order = 7
-n = 0
+k = 0
 difference = 1
 
 
@@ -35,7 +34,7 @@ def calcDissipationRate(u,u_prime,U_mean):
     return 15.0 * nu * mean_du_dx_sq
 
 #print(fc)
-while difference > 0.01 or n == 9:
+while difference > 0.01 or k == 9:
     b, a = sg.butter(LPF_order, fc*2/fs, btype='lowpass', output='ba')
     u_filt = sg.filtfilt(b,a,u)
     U_filt = np.mean(u_filt)
@@ -46,9 +45,9 @@ while difference > 0.01 or n == 9:
     fc_new = 1.1*kolmogorov_frequency
     difference = abs(fc-fc_new)
     fc = fc_new
-    n += 1
+    k += 1
 
-print(round(fc),eta)
+#print(round(fc))
 
 #b
 BIN = 14
@@ -59,54 +58,56 @@ Freq, E_f = sg.welch(up_filt, fs, nperseg=2**(BIN+1))
 E_k = E_f*U_filt/(2*np.pi)
 k_space = 2*np.pi*fc
 
+
+
 y_aksen = E_k*eta/nu**2
 x_aksen = k_space*Freq
 
 
-plt.figure(figsize=(10, 5))
-plt.loglog(x_aksen,y_aksen)
-plt.loglog(x_aksen,1e15*x_aksen**(-5/3))
-plt.ylabel("$E_k$η/ν\u00b2")
-plt.xlabel('kη')
-plt.ylim(1e-6)
-plt.axvline(x=3e6, color='r', linestyle='--')
-plt.axvline(x=1e8, color='r', linestyle='--')
-plt.title('$E_k$η/ν\u00b2 vs. kη')
-plt.legend(['The normalized k-space spectra',r'$k^{-5/3}$'])
-plt.show()
-
-#d
-
+# Part 4d - Calculate integral length scale L11
 maxLags = 40000
 acf_result = sm.tsa.acf(up_filt, nlags=maxLags, fft=True)
 Buu = acf_result
 lags = np.arange(len(Buu))
-
 rs = lags * (U_filt/fs)
 
-#Plot this to help visulise the values
+# First, make a regular plot to identify the zero crossing
 plt.figure(figsize=(10, 6))
 plt.plot(rs, Buu)
-plt.ylabel(r'$B_{uu}$')
+plt.ylabel('Buu')
 plt.xlabel('rs [m]')
 plt.axhline(y=0, color='r', linestyle='--')
 plt.title('Autocorrelation of u′ (linear scale)')
 plt.grid(True)
 plt.show()
 
+# Now make a log scale plot similar to Figure 1 in the assignment
+# (avoiding log(0) by starting from index 1)
 plt.figure(figsize=(10, 6))
-plt.semilogx(rs[1:], Buu[1:])
-plt.ylabel(r'$B_{uu}$')
+plt.semilogx(rs[1:], Buu[1:])  # Start from index 1 to avoid log(0)
+plt.ylabel('Buu')
 plt.xlabel('rs [m]')
 plt.axhline(y=0, color='r', linestyle='--')
 plt.title('Autocorrelation of u′ (log scale on x-axis)')
+plt.grid(True)
 plt.show()
 
+# Find the first zero-crossing
 zero_crossing_indices = np.where(Buu <= 0)[0]
-first_zero_idx = zero_crossing_indices[0]
-L11 = np.trapz(Buu[:first_zero_idx+1], rs[:first_zero_idx+1])
+if len(zero_crossing_indices) > 0:
+    first_zero_idx = zero_crossing_indices[0]
+    print(f"First zero crossing at index {first_zero_idx}, rs = {rs[first_zero_idx]} m")
+else:
+    first_zero_idx = len(Buu) - 1
+    print("No zero crossing found, using entire range")
 
-decades = np.log10(L11/eta)
-print(f"L11 {L11}")
-print(f"Eta {eta}")
-print(f"Decades {decades}")
+# Integrate from rs = 0 up to the first zero-crossing
+# Use the actual rs values for integration
+L11 = np.trapz(Buu[:first_zero_idx+1], rs[:first_zero_idx+1])
+print(f"Integral length scale L11 = {L11:.6f} m")
+
+# Calculate the number of decades between L11 and eta
+decades = np.log10(L11) - np.log10(eta)
+print(f"Number of decades between L11 and η: {decades:.2f}")
+print(f"L11 = {L11:.6f} m")
+print(f"η = {eta:.10f} m")
