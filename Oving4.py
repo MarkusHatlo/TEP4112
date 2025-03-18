@@ -55,22 +55,21 @@ BIN = 14
 
 Freq, E_f = sg.welch(up_filt, fs, nperseg=2**(BIN+1))
 
-
 E_k = E_f*U_filt/(2*np.pi)
-k_space = 2*np.pi*fc
+k_space = 2*np.pi*Freq/U_filt
 
 y_aksen = E_k*eta/nu**2
-x_aksen = k_space*Freq
+x_aksen = k_space*eta
 
 
 plt.figure(figsize=(10, 5))
 plt.loglog(x_aksen,y_aksen)
-plt.loglog(x_aksen,1e15*x_aksen**(-5/3))
+plt.loglog(x_aksen,x_aksen**(-5/3))
 plt.ylabel("$E_k$η/ν\u00b2")
 plt.xlabel('kη')
 plt.ylim(1e-6)
-plt.axvline(x=3e6, color='r', linestyle='--')
-plt.axvline(x=1e8, color='r', linestyle='--')
+plt.axvline(x=3e-3, color='r', linestyle='--')
+plt.axvline(x=1e-1, color='r', linestyle='--')
 plt.title('$E_k$η/ν\u00b2 vs. kη')
 plt.legend(['The normalized k-space spectra',r'$k^{-5/3}$'])
 plt.show()
