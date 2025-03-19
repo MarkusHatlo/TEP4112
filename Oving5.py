@@ -30,30 +30,23 @@ turbulenceGrid_std = np.std(turbulenceGrid_u_prime)
 boundryLayer_turbulence_intensity = boundryLayer_std/boundryLayer_U
 turbulenceGrid_turbulence_intensity = turbulenceGrid_std/turbulenceGrid_U
 
-print(f"This is the turbulence intensity for both data sets {np.mean(boundryLayer_turbulence_intensity):.3g} and {np.mean(turbulenceGrid_turbulence_intensity):.3g}\n")
-print
+print()
+print(f"This is the turbulence intensity for the boundry layer and the turbulence grid {boundryLayer_turbulence_intensity:.3g} and {turbulenceGrid_turbulence_intensity:.3g}\n")
+
 #Task b
 
 boundryLayer_skewness = sps.skew(boundryLayer_u)
 turbulenceGrid_skewness = sps.skew(turbulenceGrid_u)
 
-print(f"This is the skewness for both data sets {boundryLayer_skewness:.3g} and {turbulenceGrid_skewness:.3g}\n")
+print(f"This is the skewness for the boundry layer and the turbulence grid {boundryLayer_skewness:.3g} and {turbulenceGrid_skewness:.3g}\n")
 
 #Task c
 boundryLayer_kurtosis= sps.kurtosis(boundryLayer_u)
 turbulenceGrid_kurtosis= sps.kurtosis(turbulenceGrid_u)
 
-print(f"This is the kurtosis for both data sets {boundryLayer_kurtosis:.3g} and {turbulenceGrid_kurtosis:.3g}")
+print(f"This is the kurtosis for the boundry layer and the turbulence grid {boundryLayer_kurtosis:.3g} and {turbulenceGrid_kurtosis:.3g}")
 
 #Task d
-
-# boundryLayer_probability = norm.cdf(boundryLayer_u ,loc= boundryLayer_U , scale= np.std(boundryLayer_u))
-# boundryLayer_x_axis = np.linspace(0,1,len(boundryLayer_probability))
-
-# plt.figure(figsize=(10, 6))
-# plt.plot(boundryLayer_probability,boundryLayer_x_axis)
-# plt.show()
-
 
 boundryLayer_normalized = boundryLayer_u_prime / boundryLayer_std
 turbulenceGrid_normalized = turbulenceGrid_u_prime / turbulenceGrid_std
@@ -76,17 +69,18 @@ plt.title('PDF of Normalized Velocity Fluctuations')
 plt.legend()
 plt.grid(True)
 plt.xlim(-4, 4) 
-plt.show()
+#plt.show()
 
 plt.figure(figsize=(10, 6))
 
-plt.semilogx(x_range, boundryLayer_kde(x_range), 'b-', linewidth=2, label='Boundary Layer')
-plt.semilogx(x_range, turbulenceGrid_kde(x_range), 'r-', linewidth=2, label='Turbulence Grid')
-plt.semilogx(x_range, gaussian_pdf, 'k--', linewidth=2, label='Gaussian (S=0, K=3)')
+plt.semilogy(x_range, boundryLayer_kde(x_range), 'b-', linewidth=2, label='Boundary Layer')
+plt.semilogy(x_range, turbulenceGrid_kde(x_range), 'r-', linewidth=2, label='Turbulence Grid')
+plt.semilogy(x_range, gaussian_pdf, 'k--', linewidth=2, label='Gaussian (S=0, K=3)')
 
 plt.xlabel(r'$u\' / \sigma$')
 plt.ylabel('Probability Density')
 plt.title('PDF of Normalized Velocity Fluctuations in semilog plot')
 plt.legend()
+plt.ylim(bottom=1e-4)
 plt.grid(True) 
 plt.show()
