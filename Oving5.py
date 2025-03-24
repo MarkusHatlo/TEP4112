@@ -41,8 +41,8 @@ turbulenceGrid_skewness = sps.skew(turbulenceGrid_u)
 print(f"This is the skewness for the boundry layer and the turbulence grid {boundryLayer_skewness:.3g} and {turbulenceGrid_skewness:.3g}\n")
 
 #Task c
-boundryLayer_kurtosis= sps.kurtosis(boundryLayer_u)
-turbulenceGrid_kurtosis= sps.kurtosis(turbulenceGrid_u)
+boundryLayer_kurtosis= sps.kurtosis(boundryLayer_u, fisher=False)
+turbulenceGrid_kurtosis= sps.kurtosis(turbulenceGrid_u, fisher=False)
 
 print(f"This is the kurtosis for the boundry layer and the turbulence grid {boundryLayer_kurtosis:.3g} and {turbulenceGrid_kurtosis:.3g}")
 
