@@ -6,6 +6,8 @@ import matplotlib.pyplot as plt
 import statsmodels.api as sm
 import scipy.stats as sps
 from scipy.stats import norm
+from scipy.optimize import curve_fit
+
 
 
 def calcDissipationRate(u,u_prime,U_mean):
@@ -106,8 +108,8 @@ def plot_statistics():
 
 
 # Load the .mat file
-#for i in [25,29,34,38,43,47,52,57,61,66,70,75,80]:
-for i in [25,52,80]:
+for i in [25,29,34,38,43,47,52,57,61,66,70,75,80]:
+#for i in [25,52,80]:
 #for i in [25]:
     file_path = f"{i}M_processed.mat"
     dataValues = scipy.io.loadmat(fr"Group 8\processed\{file_path}")
@@ -157,37 +159,51 @@ for i in [25,52,80]:
 
     # calc_decades()
 
-    plot_statistics()
+    # plot_statistics()
 
 
 
     # k_full = 1.5 * (u_filt_std**2)
     # print("TKE (full isotropy) =", k_full)
 
-    # decay.append(np.mean(up_filt**2))
-    # decay_position.append(i)
+    decay.append(round(float(np.mean(up_filt**2)),4))
+    decay_position.append(i)
 
 
     print('Calculations completed\n')
 
 #------------------------------------------------------------------------------
 #Kode for decay
-# first_position = decay_position[0]
-# first_value = decay[0]
+first_position = decay_position[0]
+first_value = decay[0]
 
-# # Calculate the scaling coefficient
-# scaling_coefficient = first_value / (first_position**(-1.14))
+scaling_coefficient = first_value / (first_position**(-1.14))
 
-# # Now create the properly scaled power law
-# powerlaw = [scaling_coefficient * (i**(-1.14)) for i in decay_position]
+powerlaw = [scaling_coefficient * (i**(-1.14)) for i in decay_position]
 
-# plt.figure(figsize=(10, 6))
-# plt.plot(decay_position,decay,'o', linestyle='')
-# plt.plot(decay_position,powerlaw, color = 'black')
-# plt.ylabel(r'$\bar{u_1^2}$')
-# plt.xlabel('Position in the streamwise direction')
-# plt.title(r'The decay of $\bar{u_1^2}$ in the streamwise direction')
-# plt.show()
+
+def power_law(x, A, n):
+    return A * x**(-n)
+
+params, params_covariance = curve_fit(power_law, decay_position, decay)
+A_fit, n_fit = params
+powerlaw_fit = power_law(np.array(decay_position), A_fit, n_fit)
+
+# perr = np.sqrt(np.diag(params_covariance))
+# print(f"Parameter errors: ΔA = {perr[0]:.4f}, Δn = {perr[1]:.4f}")
+
+print(f"Fitted parameters: A = {A_fit:.4f}, n = {n_fit:.4f}")
+print(f'This is the decay numbers A = {scaling_coefficient:.4g} deacy = {decay} and position = {decay_position}')
+
+
+plt.figure(figsize=(10, 6))
+plt.plot(decay_position,decay,'o', linestyle='')
+plt.plot(decay_position,powerlaw, color = 'black')
+plt.plot(decay_position,powerlaw_fit, color = 'green')
+plt.ylabel(r'$\bar{u_1^2}$')
+plt.xlabel('Position in the streamwise direction')
+plt.title(r'The decay of $\bar{u_1^2}$ in the streamwise direction')
+plt.show()
 #------------------------------------------------------------------------------
 
 
