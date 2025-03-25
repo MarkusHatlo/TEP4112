@@ -8,7 +8,7 @@ import scipy.stats as sps
 from scipy.stats import norm
 from scipy.optimize import curve_fit
 
-
+plt.rcParams['font.size'] = 22
 
 def calcDissipationRate(u,u_prime,U_mean):
     dt = 1.0 / fs
@@ -20,6 +20,8 @@ def calcDissipationRate(u,u_prime,U_mean):
     mean_du_dx_sq = np.mean(du_dx**2)
 
     return 15.0 * nu * mean_du_dx_sq
+
+y_aksen_list = []
 
 def plot_spectra():
     BIN = 14
@@ -33,18 +35,23 @@ def plot_spectra():
     y_aksen = E_k*eta/nu**2
     x_aksen = k_space*eta
 
+    y_aksen_list.append(E_k*eta/nu**2)
 
-    plt.figure(figsize=(10, 5))
-    plt.loglog(x_aksen,y_aksen)
-    plt.loglog(x_aksen,x_aksen**(-5/3))
-    plt.ylabel("$E_k$η/ν\u00b2")
-    plt.xlabel('kη')
-    plt.ylim(1e-6)
-    #plt.axvline(x=3e6, color='r', linestyle='--')
-    #plt.axvline(x=1e8, color='r', linestyle='--')
-    plt.title(f'$E_k$η/ν\u00b2 vs. kη - File: {i}M')
-    plt.legend(['The normalized k-space spectra',r'$k^{-5/3}$'])
-    plt.show()
+    if len(y_aksen_list) == 3:
+
+        plt.figure(figsize=(10, 5))
+        plt.loglog(x_aksen,y_aksen_list[0])
+        plt.loglog(x_aksen,y_aksen_list[1])
+        plt.loglog(x_aksen,y_aksen_list[2])
+        plt.loglog(x_aksen,2*x_aksen**(-5/3))
+        plt.ylabel("$E_k$η/ν\u00b2")
+        plt.xlabel('kη')
+        plt.ylim(1e-6)
+        #plt.axvline(x=3e6, color='r', linestyle='--')
+        #plt.axvline(x=1e8, color='r', linestyle='--')
+        plt.title(f'$E_k$η/ν\u00b2 vs. kη')
+        plt.legend(['25M','52M','80M',r'$k^{-5/3}$'])
+        plt.show()
 
 def plot_autocorrelation():
     #Plot this to help visulise the values
@@ -65,7 +72,6 @@ def plot_autocorrelation():
     plt.title(f'Autocorrelation of u′ (log scale on x-axis)- File: {i}M')
     plt.show()
 
-
 def calc_decades():
     zero_crossing_indices = np.where(Buu <= 0)[0]
     first_zero_idx = zero_crossing_indices[0]
@@ -79,6 +85,7 @@ def calc_decades():
 decay = []
 decay_position = []
 powerlaw = []
+u_filt_kde_list = []
 
 def plot_statistics():
     x_range = np.linspace(-4, 4, 1000)
@@ -95,21 +102,27 @@ def plot_statistics():
     u_kurtosis= sps.kurtosis(u_filt, fisher=False)    
     print(f"This is the kurtosis for flow {i:.3g}M: {u_kurtosis}\n")
 
-    # plt.figure(figsize=(10, 6))
-    # plt.plot(x_range, u_filt_kde(x_range), 'r-', linewidth=2, label='Turbulence Grid')
-    # plt.plot(x_range, gaussian_pdf, 'k--', linewidth=2, label='Gaussian (S=0, K=3)')
-    # plt.xlabel(r'$u\' / \sigma$')
-    # plt.ylabel('Probability Density')
-    # plt.title('PDF of Normalized Velocity Fluctuations')
-    # plt.legend()
-    # plt.grid(True)
-    # plt.xlim(-4, 4)
-    # plt.show()
+    u_filt_kde_list.append(u_filt_kde(x_range))
+
+    if len(u_filt_kde_list) == 3:
+
+        plt.figure(figsize=(10, 6))
+        plt.plot(x_range, u_filt_kde_list[0], 'r-', linewidth=2, label='Turbulence Grid', color = 'red')
+        plt.plot(x_range, u_filt_kde_list[1], 'r-', linewidth=2, label='Turbulence Grid', color = 'blue')
+        plt.plot(x_range, u_filt_kde_list[2], 'r-', linewidth=2, label='Turbulence Grid', color = 'green')
+        plt.plot(x_range, gaussian_pdf, 'k--', linewidth=2, label='Gaussian (S=0, K=3)')
+        plt.xlabel(r'$u\' / \sigma$')
+        plt.ylabel('Probability Density')
+        plt.title('PDF of Normalized Velocity Fluctuations')
+        plt.legend()
+        plt.grid(True)
+        plt.xlim(-4, 4)
+        plt.show()
 
 
 # Load the .mat file
-for i in [25,29,34,38,43,47,52,57,61,66,70,75,80]:
-#for i in [25,52,80]:
+#for i in [25,29,34,38,43,47,52,57,61,66,70,75,80]:
+for i in [25,52,80]:
 #for i in [25]:
     file_path = f"{i}M_processed.mat"
     dataValues = scipy.io.loadmat(fr"Group 8\processed\{file_path}")
@@ -122,6 +135,7 @@ for i in [25,29,34,38,43,47,52,57,61,66,70,75,80]:
     u = np.float64(dataValues['u'].squeeze())
     nu = (dataValues['nu']).item()
     fs = (dataValues['fs']).item()
+
 
     #a
 
@@ -189,23 +203,21 @@ params, params_covariance = curve_fit(power_law, decay_position, decay)
 A_fit, n_fit = params
 powerlaw_fit = power_law(np.array(decay_position), A_fit, n_fit)
 
-# perr = np.sqrt(np.diag(params_covariance))
-# print(f"Parameter errors: ΔA = {perr[0]:.4f}, Δn = {perr[1]:.4f}")
-
 print(f"Fitted parameters: A = {A_fit:.4f}, n = {n_fit:.4f}")
 print(f'This is the decay numbers A = {scaling_coefficient:.4g} deacy = {decay} and position = {decay_position}')
+
+std_curve_fit = np.sqrt(np.diag(params_covariance))
+print(f"Parameter errors:  Δn = {std_curve_fit[1]:.4g}")
 
 
 plt.figure(figsize=(10, 6))
 plt.plot(decay_position,decay,'o', linestyle='')
-plt.plot(decay_position,powerlaw, color = 'black')
 plt.plot(decay_position,powerlaw_fit, color = 'green')
 plt.ylabel(r'$\bar{u_1^2}$')
 plt.xlabel('Position in the streamwise direction')
 plt.title(r'The decay of $\bar{u_1^2}$ in the streamwise direction')
 plt.show()
 #------------------------------------------------------------------------------
-
 
 
 
