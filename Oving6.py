@@ -3,9 +3,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
 
-dataValues = scipy.io.loadmat('E:/Skole/TEP4112/data/Instantaneous.mat')
-nearValues = scipy.io.loadmat('E:/Skole/TEP4112/data/NearWake.mat')
-farValues = scipy.io.loadmat('E:/Skole/TEP4112/data/FarWake.mat')
+dataValues = scipy.io.loadmat('data/Instantaneous.mat')
+nearValues = scipy.io.loadmat('data/NearWake.mat')
+farValues = scipy.io.loadmat('data/FarWake.mat')
 
 instant_D = dataValues['D']
 instant_U_0 = dataValues['U_0']
@@ -140,12 +140,12 @@ for i, profile in enumerate(far_wake_profiles):
 ax1.set_xlabel('$U_1/U_0$')
 ax1.set_ylabel('$x_2/D$')
 ax1.set_title('Near Wake Region')
-ax1.legend()
+#ax1.legend()
 ax1.grid(True)
 
 ax2.set_xlabel('$U_1/U_0$')
 ax2.set_title('Far Wake Region')
-ax2.legend()
+#ax2.legend()
 ax2.grid(True)
 
 plt.tight_layout()
@@ -218,7 +218,7 @@ ax2.legend()
 ax2.grid(True)
 
 
-max_ti = 30 
+max_ti = 40 
 ax1.set_xlim(0, max_ti)
 ax2.set_xlim(0, max_ti)
 
