@@ -7,8 +7,14 @@ import statsmodels.api as sm
 import scipy.stats as sps
 from scipy.stats import norm
 from scipy.optimize import curve_fit
+from matplotlib.ticker import LogLocator
+import matplotlib.ticker as plti
 
-plt.rcParams['font.size'] = 22
+plt.rcParams.update({
+    'text.usetex': False,           # Use LaTeX to render text
+    'font.family': 'serif',        # Use serif font
+    'font.size': 22                # Keep your desired font size
+})
 
 def calcDissipationRate(u,u_prime,U_mean):
     dt = 1.0 / fs
@@ -134,17 +140,16 @@ def plot_statistics():
     print(f"This is the kurtosis for flow {i:.3g}M: {u_kurtosis}\n")
 
     u_filt_kde_list.append(u_filt_kde(x_range))
-
     if len(u_filt_kde_list) == 3:
 
         plt.figure(figsize=(10, 6))
-        plt.plot(x_range, u_filt_kde_list[0], 'r-', linewidth=2, label='25M', color = 'red')
-        plt.plot(x_range, u_filt_kde_list[1], 'r-', linewidth=2, label='52M', color = 'blue')
-        plt.plot(x_range, u_filt_kde_list[2], 'r-', linewidth=2, label='80M', color = 'green')
-        plt.plot(x_range, gaussian_pdf, 'k--', linewidth=2, label='Gaussian (S=0, K=3)')
+        plt.semilogy(x_range, u_filt_kde_list[0], linewidth=2, label=r'$25M$', color = 'red')
+        plt.semilogy(x_range, u_filt_kde_list[1], linewidth=2, label=r'$52M$', color = 'blue')
+        plt.semilogy(x_range, u_filt_kde_list[2], linewidth=2, label=r'$80M$', color = 'green')
+        plt.semilogy(x_range, gaussian_pdf, 'k--', linewidth=2, label=r'$\text{Gaussian}~(S=0,~K=3)$')
         plt.xlabel(r'$u\' / \sigma$')
         plt.ylabel('Probability Density')
-        plt.title('PDF of Normalized Velocity Fluctuations')
+        plt.title('PDF of Normalized Velocity Fluctuations',)
         plt.legend()
         plt.grid(True)
         plt.xlim(-4, 4)
@@ -154,8 +159,8 @@ eta_list = []
 
 # Load the .mat file
 for i in [25,29,34,38,43,47,52,57,61,66,70,75,80]:
-#for i in [25,52,80]:
-# for i in [70,75]:
+# for i in [25,29,52,80]:
+# for i in [70]:
     file_path = f"{i}M_processed.mat"
     dataValues = scipy.io.loadmat(fr"Group 8\processed\{file_path}")
 
@@ -192,6 +197,8 @@ for i in [25,29,34,38,43,47,52,57,61,66,70,75,80]:
         n += 1
 
     eta_list.append(float(eta))
+    if i == 25:
+        U0 = U_filt
 
     # maxLags = 40000
     # acf_result = sm.tsa.acf(up_filt, nlags=maxLags, fft=True)
@@ -227,7 +234,10 @@ first_value = decay[0]
 
 scaling_coefficient = first_value / (first_position**(-1.14))
 
-powerlaw = [scaling_coefficient * (i**(-1.14)) for i in decay_position]
+decay_ref = decay
+decay = [val / (U0**2) for val in decay_ref]
+
+# powerlaw = [scaling_coefficient * (i**(-1.14)) for i in decay_position]
 
 
 def power_law(x, A, n, x0):
@@ -244,17 +254,125 @@ print(f'This is the decay numbers A = {scaling_coefficient:.4g} deacy = {decay} 
 std_curve_fit = np.sqrt(np.diag(params_covariance))
 print(f"Parameter errors:  Δn = {std_curve_fit[1]:.4g}")
 
+decay_position_riktig = decay_position[2:]
+decay_riktig = decay[2:]
+# powerlaw_riktig = powerlaw[1:]
+
+params_riktig, params_covariance_riktig = curve_fit(power_law, decay_position_riktig, decay_riktig)
+A_fit_riktig, n_fit_riktig, x0_fit_riktig = params_riktig
+powerlaw_fit_riktig = power_law(np.array(decay_position_riktig), A_fit_riktig, n_fit_riktig, x0_fit_riktig)
+
+print(f"Fitted parameters: A = {A_fit_riktig:.4f}, n = {n_fit_riktig:.4f} x0 = {x0_fit_riktig:.4g}")
+print(f'This is the decay numbers A = {scaling_coefficient:.4g} deacy = {decay_riktig} and position = {decay_position_riktig}')
+
+std_curve_fit_riktig = np.sqrt(np.diag(params_covariance_riktig))
+print(f"Parameter errors:  Δn = {std_curve_fit_riktig[1]:.4g}")
+
+# n1 = power_law(np.array(decay_position), A_fit, 1, x0_fit)
+# n12 = power_law(np.array(decay_position), A_fit, 1.2, x0_fit)
+# n14 = power_law(np.array(decay_position), A_fit, 1.4, x0_fit)
+
+first_x = decay_position[0]
+first_y = decay[0]
+
+# Create a function for theoretical lines that pass through the first point
+def theoretical_line(x, n):
+    # Calculate coefficient A so the line passes through (first_x, first_y)
+    A = first_y * (first_x**n)
+    return A * (x**(-n))
+
+# Calculate the three theoretical lines
+n1_line = theoretical_line(np.array(decay_position), 1.0)
+n12_line = theoretical_line(np.array(decay_position), 1.2)
+n14_line = theoretical_line(np.array(decay_position), 1.4)
+
 
 plt.figure(figsize=(10, 6))
-plt.plot(decay_position,decay,'o', linestyle='')
-plt.plot(decay_position,powerlaw_fit, color = 'green')
-plt.ylabel(r'$\bar{u_1^2}$')
-plt.xlabel('Position in the streamwise direction')
-plt.title(r'The decay of $\bar{u_1^2}$ in the streamwise direction')
+plt.loglog(decay_position,decay,'o', linestyle='')
+plt.loglog(decay_position,powerlaw_fit, color = 'red', label=r'Fitting all points $(n=1.45, x_0 = -5.2)$')
+plt.loglog(decay_position_riktig,powerlaw_fit_riktig, color = 'green', label=r'Fitting without 1. point $(n=1.19, x_0 = 3.4)$')
+plt.loglog(decay_position,n1_line, color='k', linestyle='--', label=r'Complete self-preservation $(n=1.0)$')
+plt.loglog(decay_position,n12_line, color='g', linestyle='--', label=r'Saffman turbulence $(n=1.2)$')
+plt.loglog(decay_position,n14_line, color='b', linestyle='--', label=r'Batchelor turbulence $(n=10/7)$')
+plt.xticks([30, 40, 60])
+plt.xlim(20, None)
+# plt.yticks([0.5, 0.7, 1.0, 1.6])
+plt.ylabel(r'$\overline{u^{\prime 2}}/U_0$ [-]')
+plt.xlabel(r'$x_1/M$ - $x_0/M$ [-]')
+#plt.title(r'The decay of $\overline{u^{\prime 2}}$ in the streamwise direction')
+plt.legend()
+plt.grid(True, which="both", ls="-", alpha=0.2)
 plt.show()
 #------------------------------------------------------------------------------
 
 
+# # Test plot to verify fonts
+# x = np.linspace(0, 10, 100)
+# y = np.sin(x)
+# plt.figure(figsize=(8, 5))
+# plt.plot(x, y)
+# plt.title(r"Test Plot with Latin Modern: $\sin(x)$")
+# plt.xlabel(r"$x$ values")
+# plt.ylabel(r"$\sin(x)$")
+# plt.tight_layout()
+# plt.show()
+
+
+n_list = []
+positions = []
+
+for i in range(8):
+    decay_position_loop = decay_position[i:]
+    decay_loop = decay[i:]
+
+    if len(decay_position_loop) <= 3:
+        print(f"Stopping at iteration {i}: not enough data points left")
+        break
+
+    try:
+        # Increase maxfev and provide better initial guess based on previous fit
+        if i == 0:
+            params_loop, params_covariance_loop = curve_fit(power_law, decay_position_loop, decay_loop, 
+                                                          maxfev=100)
+        else:
+            # Use previous parameters as initial guess
+            params_loop, params_covariance_loop = curve_fit(power_law, decay_position_loop, decay_loop, 
+                                                          p0=params_prev, 
+                                                          maxfev=1000)
+        
+        A_fit_loop, n_fit_loop, x0_fit_loop = params_loop
+        powerlaw_fit_loop = power_law(np.array(decay_position), A_fit_loop, n_fit_loop, x0_fit_loop)
+        n_list.append(n_fit_loop)
+        positions.append(decay_position[i])  # Store corresponding position
+        
+        # Save for next iteration
+        params_prev = params_loop
+        
+        print(f"Iteration {i}: n = {n_fit_loop:.4f}")
+        
+    except RuntimeError as e:
+        print(f"Skipping iteration {i}: {str(e)}")
+        continue
+
+# Only plot if we have data
+if n_list:
+    plt.figure(figsize=(10,10))
+    plt.plot(positions, n_list, color='red', marker='o', label='n exponent')
+    plt.axhline(y=1.0, color='k', linestyle='--', label=r'Complete Self-Preservation $(n=1.0)$')
+    plt.axhline(y=1.2, color='g', linestyle='--', label=r'Saffman Turbulence $(n=1.2)$')
+    plt.axhline(y=10/7, color='b', linestyle='--', label=r'Batchelor Turbulence $(n=10/7)$')
+    
+    ax = plt.gca()
+    ax.xaxis.set_major_formatter(plti.ScalarFormatter())
+    ax.xaxis.set_minor_formatter(plti.ScalarFormatter())
+    
+    plt.ylabel('Value of n')
+    plt.xlabel(r'$x_1/M$')
+    #plt.title('Variation of n exponent with reduced data points')
+    plt.legend()
+    plt.show()
+else:
+    print("No successful fits to plot")
 
 
 
@@ -262,4 +380,4 @@ plt.show()
 
 
 
-
+# %%
