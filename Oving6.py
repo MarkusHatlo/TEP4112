@@ -82,6 +82,7 @@ ax.set_ylim(np.min(instant_x_2_normalized), np.max(instant_x_2_normalized))
 
 # Show the plot
 plt.tight_layout()
+plt.savefig('instantaneous_velocity_field.png', dpi=300)
 plt.show()
 
 #Task b
@@ -149,6 +150,7 @@ ax2.set_title('Far Wake Region')
 ax2.grid(True)
 
 plt.tight_layout()
+plt.savefig('wake_velocity_profiles.png', dpi=300)
 plt.show()
 
 #c
@@ -209,12 +211,12 @@ for i, profile in enumerate(far_wake_ti_profiles):
 ax1.set_xlabel('Turbulence Intensity (%)')
 ax1.set_ylabel('$x_2/D$')
 ax1.set_title('Near Wake Region - Turbulence Intensity')
-ax1.legend()
+#ax1.legend()
 ax1.grid(True)
 
 ax2.set_xlabel('Turbulence Intensity (%)')
 ax2.set_title('Far Wake Region - Turbulence Intensity')
-ax2.legend()
+#ax2.legend()
 ax2.grid(True)
 
 
@@ -223,4 +225,5 @@ ax1.set_xlim(0, max_ti)
 ax2.set_xlim(0, max_ti)
 
 plt.tight_layout()
+plt.savefig('turbulence_intensity_profiles.png', dpi=300)
 plt.show()
